@@ -1,0 +1,6 @@
+{
+  "name": "Portal HC & GA - KSO LRS-TAL",
+  "description": "Sistem Informasi Manajemen Human Capital dan General Affairs KSO LRS-TAL modern dan responsif untuk database karyawan, inventaris aset, serah terima, dan pemeliharaan servis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

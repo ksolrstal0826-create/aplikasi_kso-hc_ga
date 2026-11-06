@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KSO LRS-TAL - Sistem HC & GA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { DEFAULT: '#f59e0b', hover: '#d97706', dark: '#78350f' },
+            dark: { bg: '#0f172a', card: '#1e293b', border: '#334155', text: '#f8fafc' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0f172a; color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+    @media print {
+      body { background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ================= LAYAR LOGIN ================= -->
+  <div id="loginOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl shadow-2xl p-8 space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-brand text-slate-950 flex items-center justify-center font-extrabold text-2xl mx-auto shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <h1 class="text-xl font-bold text-white tracking-wide">Portal KSO LRS-TAL</h1>
+        <p class="text-xs text-slate-400">Silakan login sesuai kredensial akun Anda</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Username / ID Akses</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+            <input type="text" id="loginUsername" required placeholder="Contoh: AdminSuper" class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+            <input type="password" id="loginPassword" required placeholder="••••••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3 bg-brand hover:bg-brand-hover text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-amber-500/20">
+          Masuk Sistem
+        </button>
+      </form>
+
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 space-y-1">
+        <p class="font-bold text-amber-400 mb-1">Informasi Kredensial Demo:</p>
+        <div>• <strong>Super Admin</strong>: <code class="text-white">AdminSuper</code> / <code class="text-white">AdminSuper123</code></div>
+        <div>• <strong>Admin HC</strong>: <code class="text-white">AdminHC</code> / <code class="text-white">AdminHC123</code></div>
+        <div>• <strong>Admin GA</strong>: <code class="text-white">AdminGA</code> / <code class="text-white">AdminGA123</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= UTAMA APLIKASI ================= -->
+  <div id="appMainWrapper" class="flex-1 flex flex-col lg:flex-row hidden">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="flex flex-col w-full lg:w-64 bg-dark-card border-r border-dark-border min-h-screen fixed lg:sticky top-0 z-40 transition-all duration-300">
+      <div class="p-5 border-b border-dark-border flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-brand text-slate-950 flex items-center justify-center font-extrabold text-xl shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-helmet-safety"></i>
+          </div>
+          <div>
+            <h1 id="sidebarCompanyName" class="font-bold text-base tracking-wide text-white">KSO LRS-TAL</h1>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Portal HC & GA</span>
+          </div>
+        </div>
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white p-1 lg:hidden">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <div class="text-xs font-semibold text-slate-400 px-3 uppercase tracking-wider mb-2">Main Menu</div>
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-chart-pie w-5 text-amber-400"></i><span>Dashboard KPI</span>
+        </button>
+
+        <div class="pt-4 text-xs font-semibold text-slate-400 px-3 uppercase tracking-wider mb-2">Human Capital (HC)</div>
+        <button onclick="switchTab('karyawan')" id="nav-karyawan" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-users w-5 text-amber-400"></i><span>Database Karyawan</span>
+        </button>
+
+        <div class="pt-4 text-xs font-semibold text-slate-400 px-3 uppercase tracking-wider mb-2">General Affairs (GA)</div>
+        <button onclick="switchTab('master')" id="nav-master" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-layer-group w-5 text-amber-400"></i><span>Master Kategori & Lokasi</span>
+        </button>
+        <button onclick="switchTab('aset')" id="nav-aset" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-boxes-stacked w-5 text-amber-400"></i><span>Database Aset</span>
+        </button>
+        <button onclick="switchTab('peminjaman')" id="nav-peminjaman" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-handshake-angle w-5 text-amber-400"></i><span>Penyerahan Aset</span>
+        </button>
+        <button onclick="switchTab('pemeliharaan')" id="nav-pemeliharaan" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-wrench w-5 text-amber-400"></i><span>Riwayat Servis</span>
+        </button>
+
+        <div class="pt-4 text-xs font-semibold text-slate-400 px-3 uppercase tracking-wider mb-2">Sistem & Konfigurasi</div>
+        <button onclick="switchTab('settings')" id="nav-settings" class="nav-item w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl transition font-medium text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white">
+          <i class="fa-solid fa-gear w-5 text-amber-400"></i><span>Pengaturan Perusahaan</span>
+        </button>
+      </nav>
+
+      <!-- Tombol Logout di Bawah Sidebar -->
+      <div class="p-4 border-t border-dark-border">
+        <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-right-from-bracket"></i> Keluar Sistem
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="flex-1 flex flex-col min-w-0 transition-all duration-300">
+      <header class="bg-dark-card border-b border-dark-border px-4 lg:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30">
+        <div class="flex items-center space-x-3">
+          <button onclick="toggleSidebar()" class="p-2 text-slate-300 hover:text-white rounded-xl hover:bg-slate-700/50 transition flex items-center gap-2 text-sm font-medium">
+            <i class="fa-solid fa-bars-staggered text-lg text-amber-400"></i>
+            <span class="hidden sm:inline">Menu Utama</span>
+          </button>
+          <span class="text-slate-600">|</span>
+          <h2 id="headerCompanyName" class="text-sm font-semibold text-slate-300 hidden sm:block">Portal Pengurusan KSO LRS-TAL</h2>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="text-xs text-right">
+            <p id="headerUserTitle" class="font-bold text-amber-400">Super Admin</p>
+            <p class="text-[10px] text-slate-400">Sesi Aktif</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 p-4 lg:p-8 space-y-6 overflow-x-hidden">
+
+        <!-- 1. DASHBOARD TAB -->
+        <section id="tab-dashboard" class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-bold text-white tracking-tight">Executive Dashboard</h2>
+              <p class="text-slate-400 text-sm">Ringkasan statistik real-time aset dan sumber daya manusia KSO LRS-TAL.</p>
+            </div>
+            <button onclick="loadAllDataFromBackend()" class="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-200 hover:text-white rounded-xl text-sm font-medium transition flex items-center gap-2">
+              <i class="fa-solid fa-rotate"></i><span>Refresh Data</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl">
+              <p class="text-xs font-medium text-slate-400 uppercase">Total Karyawan</p>
+              <h3 id="stat-karyawan" class="text-3xl font-extrabold text-white mt-1">0</h3>
+            </div>
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl">
+              <p class="text-xs font-medium text-slate-400 uppercase">Total Aset</p>
+              <h3 id="stat-aset" class="text-3xl font-extrabold text-white mt-1">0</h3>
+            </div>
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl">
+              <p class="text-xs font-medium text-slate-400 uppercase">Aset Dipinjam</p>
+              <h3 id="stat-dipinjam" class="text-3xl font-extrabold text-emerald-400 mt-1">0</h3>
+            </div>
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl">
+              <p class="text-xs font-medium text-slate-400 uppercase">Total Servis</p>
+              <h3 id="stat-servis" class="text-3xl font-extrabold text-amber-400 mt-1">0</h3>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. KARYAWAN TAB (HC) -->
+        <section id="tab-karyawan" class="space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Database Karyawan (HC)</h2>
+              <p class="text-slate-400 text-sm">Kelola identitas, pekerjaan, administrasi keuangan, serta kompetensi tim KSO LRS-TAL.</p>
+            </div>
+            <button onclick="openModalKaryawan(false)" class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-slate-950 font-bold rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/20">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Tambah Karyawan Baru</span>
+            </button>
+          </div>
+
+          <div class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden">
+            <div class="p-4 border-b border-dark-border flex flex-col md:flex-row gap-3 justify-between items-center bg-slate-900/40">
+              <div class="relative w-full md:w-80">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input type="text" id="searchKaryawan" onkeyup="renderKaryawan()" placeholder="Cari NIP, NIK, Nama, Jabatan..." class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+              </div>
+              <div class="text-xs text-slate-400 font-medium">
+                Total Record: <span id="countKaryawan" class="text-amber-400 font-bold">0</span> Orang
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-900/80 text-xs uppercase tracking-wider text-slate-400 border-b border-dark-border">
+                  <tr>
+                    <th class="py-3.5 px-4">Karyawan & NIP/NIK</th>
+                    <th class="py-3.5 px-4">Divisi & Pekerjaan</th>
+                    <th class="py-3.5 px-4">Kontak & Domisili</th>
+                    <th class="py-3.5 px-4">Sertifikasi & Kompetensi</th>
+                    <th class="py-3.5 px-4">Keuangan & BPJS</th>
+                    <th class="py-3.5 px-4 text-center">Aksi (View/Edit/Hapus)</th>
+                  </tr>
+                </thead>
+                <tbody id="tableKaryawanBody" class="divide-y divide-dark-border"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. MASTER KATEGORI & LOKASI -->
+        <section id="tab-master" class="space-y-6 hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl space-y-4">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white text-base">Kategori Aset (`categories`)</h3>
+                <button onclick="openModalAddCategory()" class="px-3 py-1.5 bg-brand text-slate-950 font-bold text-xs rounded-lg"><i class="fa-solid fa-plus mr-1"></i> Tambah Kategori</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                  <thead class="bg-slate-900/80 text-xs uppercase text-slate-400">
+                    <tr><th class="p-3">ID</th><th class="p-3">Nama Kategori</th><th class="p-3 text-right">Aksi</th></tr>
+                  </thead>
+                  <tbody id="tableCategoryBody" class="divide-y divide-dark-border"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="bg-dark-card border border-dark-border p-5 rounded-2xl space-y-4">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white text-base">Lokasi Fisik (`locations`)</h3>
+                <button onclick="openModalAddLocation()" class="px-3 py-1.5 bg-brand text-slate-950 font-bold text-xs rounded-lg"><i class="fa-solid fa-plus mr-1"></i> Tambah Lokasi</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                  <thead class="bg-slate-900/80 text-xs uppercase text-slate-400">
+                    <tr><th class="p-3">ID</th><th class="p-3">Nama Lokasi</th><th class="p-3 text-right">Aksi</th></tr>
+                  </thead>
+                  <tbody id="tableLocationBody" class="divide-y divide-dark-border"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. DATA ASET TAB -->
+        <section id="tab-aset" class="space-y-6 hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Database Aset (`assets`)</h2>
+              <p class="text-slate-400 text-sm">Pencatatan inventaris mesin, kendaraan, dan peralatan proyek.</p>
+            </div>
+            <button onclick="openModalAset(false)" class="px-4 py-2.5 bg-brand text-slate-950 font-bold rounded-xl text-sm">
+              <i class="fa-solid fa-plus mr-1"></i> Tambah Aset Baru
+            </button>
+          </div>
+          <div class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-dark-border">
+                  <tr>
+                    <th class="py-3 px-4">Kode & Nama Aset</th>
+                    <th class="py-3 px-4">Kategori & Lokasi</th>
+                    <th class="py-3 px-4">Merek / Model / S/N</th>
+                    <th class="py-3 px-4 text-center">Status</th>
+                    <th class="py-3 px-4">Penanggung Jawab</th>
+                    <th class="py-3 px-4 text-right">Aksi (View/Edit/Hapus)</th>
+                  </tr>
+                </thead>
+                <tbody id="tableAsetBody" class="divide-y divide-dark-border"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. PENYERAHAN ASET -->
+        <section id="tab-peminjaman" class="space-y-6 hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Penyerahan Aset (`asset_assignments`)</h2>
+              <p class="text-slate-400 text-sm">Kelola peminjaman dan pengembalian aset kepada karyawan.</p>
+            </div>
+            <button onclick="openModalPeminjaman(false)" class="px-4 py-2.5 bg-brand text-slate-950 font-bold rounded-xl text-sm">
+              <i class="fa-solid fa-handshake mr-1"></i> Catat Penyerahan Aset
+            </button>
+          </div>
+          <div class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm text-slate-300">
+                <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-dark-border">
+                  <tr>
+                    <th class="py-3 px-4">Pengembalian</th>
+                    <th class="py-3 px-4">ID Transaksi</th>
+                    <th class="py-3 px-4">Aset</th>
+                    <th class="py-3 px-4">Penanggung Jawab</th>
+                    <th class="py-3 px-4">Tgl Penyerahan</th>
+                    <th class="py-3 px-4">Tgl Pengembalian</th>
+                    <th class="py-3 px-4 text-center">Cetak Tanda Terima</th>
+                    <th class="py-3 px-4 text-right">Aksi (View/Edit/Hapus)</th>
+                  </tr>
+                </thead>
+                <tbody id="tablePeminjamanBody" class="divide-y divide-dark-border"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. PEMELIHARAAN -->
+        <section id="tab-pemeliharaan" class="space-y-6 hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Riwayat Servis (`asset_maintenances`)</h2>
+              <p class="text-slate-400 text-sm">Log perbaikan dan pemeliharaan alat kerja.</p>
+            </div>
+            <button onclick="openModalMaintenance(false)" class="px-4 py-2.5 bg-brand text-slate-950 font-bold rounded-xl text-sm">
+              <i class="fa-solid fa-screwdriver-wrench mr-1"></i> Catat Log Servis
+            </button>
+          </div>
+          <div class="bg-dark-card border border-dark-border rounded-2xl overflow-hidden">
+            <table class="w-full text-left text-sm text-slate-300">
+              <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-dark-border">
+                <tr><th class="p-3">ID Servis</th><th class="p-3">Aset</th><th class="p-3">Tanggal</th><th class="p-3">Biaya</th><th class="p-3">Deskripsi</th><th class="p-3 text-right">Aksi (View/Edit/Hapus)</th></tr>
+              </thead>
+              <tbody id="tableMaintenanceBody" class="divide-y divide-dark-border"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7. PENGATURAN PERUSAHAAN & LOGO -->
+        <section id="tab-settings" class="space-y-6 hidden">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Pengaturan Perusahaan</h2>
+            <p class="text-slate-400 text-sm">Konfigurasi identitas, logo, dan profil perusahaan untuk seluruh cetakan laporan.</p>
+          </div>
+          <div class="bg-dark-card border border-dark-border p-6 rounded-2xl max-w-2xl">
+            <form onsubmit="submitSettings(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Perusahaan</label>
+                <input type="text" id="setCompanyName" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">NPWP Perusahaan</label>
+                <input type="text" id="setCompanyNpwp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Lengkap</label>
+                <textarea id="setCompanyAddress" rows="3" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Logo Perusahaan (Upload Gambar)</label>
+                <input type="file" id="setCompanyLogoFile" accept="image/*" onchange="handleLogoUpload(event)" class="w-full text-xs text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-xl mb-2">
+                <input type="hidden" id="setCompanyLogoUrl">
+                <div id="logoPreviewContainer" class="mt-2"></div>
+              </div>
+              <div class="flex justify-end pt-2">
+                <button type="submit" class="px-5 py-2.5 bg-brand text-slate-950 font-bold rounded-xl text-sm">Simpan Pengaturan</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL FORM KARYAWAN -->
+  <div id="modalKaryawan" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-dark-card border border-dark-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-6">
+      <div class="p-5 border-b border-dark-border flex justify-between items-center bg-slate-900/60">
+        <div>
+          <h3 id="modalKaryawanTitle" class="font-bold text-lg text-white">Tambah Karyawan Baru</h3>
+          <p class="text-xs text-slate-400">Isi formulir data karyawan secara menyeluruh sesuai standar KSO LRS-TAL</p>
+        </div>
+        <button onclick="closeModal('modalKaryawan')" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+      
+      <form id="formKaryawan" onsubmit="submitKaryawan(event)" class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+        <input type="hidden" id="empId">
+
+        <!-- 1. DATA PRIBADI -->
+        <div>
+          <h4 class="text-xs font-bold uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-user text-sm"></i> 1. Data Pribadi
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Lengkap <span class="text-rose-500">*</span></label>
+              <input type="text" id="empNama" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tempat Lahir</label>
+              <input type="text" id="empTempatLahir" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tanggal Lahir</label>
+              <input type="date" id="empTanggalLahir" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Jenis Kelamin <span class="text-rose-500">*</span></label>
+              <select id="empJenisKelamin" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="Laki-laki">Laki-laki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Agama</label>
+              <select id="empAgama" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="Islam">Islam</option>
+                <option value="Kristen Protestan">Kristen Protestan</option>
+                <option value="Katolik">Katolik</option>
+                <option value="Hindu">Hindu</option>
+                <option value="Buddha">Buddha</option>
+                <option value="Khonghucu">Khonghucu</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Status Pernikahan</label>
+              <select id="empStatusNikah" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="Belum Menikah">Belum Menikah</option>
+                <option value="Menikah">Menikah</option>
+                <option value="Cerai">Cerai</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">No. Telepon / WA</label>
+              <input type="text" id="empHp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Email</label>
+              <input type="email" id="empEmail" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Kontak Darurat (Nama & No.HP)</label>
+              <input type="text" id="empKontakDarurat" placeholder="Istri: 0812xxxx" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="sm:col-span-2 md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Sesuai KTP</label>
+                <textarea id="empAlamatKtp" rows="2" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Alamat Domisili</label>
+                <textarea id="empAlamatDomisili" rows="2" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. INFORMASI PEKERJAAN -->
+        <div class="border-t border-dark-border pt-4">
+          <h4 class="text-xs font-bold uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-briefcase text-sm"></i> 2. Informasi Pekerjaan
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">No. Induk Pegawai (NIP) <span class="text-rose-500">*</span></label>
+              <input type="text" id="empNip" required placeholder="Contoh: LRS-001" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">NIK Karyawan <span class="text-rose-500">*</span></label>
+              <input type="text" id="empNik" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Jabatan / Posisi <span class="text-rose-500">*</span></label>
+              <input type="text" id="empJabatan" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Divisi / Departemen <span class="text-rose-500">*</span></label>
+              <select id="empDepartemen" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="Project Management">Project Management</option>
+                <option value="Operasional Lapangan">Operasional Lapangan</option>
+                <option value="Engineering & Maintenance">Engineering & Maintenance</option>
+                <option value="HSE & Safety">HSE & Safety</option>
+                <option value="HC, Finance & GA">HC, Finance & GA</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tanggal Mulai Bekerja</label>
+              <input type="date" id="empTglMulaiKerja" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Lokasi Kerja / Site</label>
+              <input type="text" id="empLokasiKerja" placeholder="Contoh: Site Lahat / HO Jakarta" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Status Kepegawaian</label>
+              <select id="empStatusKepegawaian" onchange="toggleAkhirKontrak()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="Karyawan Tetap">Karyawan Tetap</option>
+                <option value="Karyawan Kontrak (PKWT)">Karyawan Kontrak (PKWT)</option>
+                <option value="Paruh Waktu">Paruh Waktu</option>
+                <option value="Outsourcing">Outsourcing</option>
+              </select>
+            </div>
+            <div id="containerAkhirKontrak" class="hidden">
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tanggal Akhir Kontrak</label>
+              <input type="date" id="empAkhirKontrak" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. DATA ADMINISTRATIF & KEUANGAN -->
+        <div class="border-t border-dark-border pt-4">
+          <h4 class="text-xs font-bold uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice-dollar text-sm"></i> 3. Data Administratif & Keuangan
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor KTP (NIK KTP)</label>
+              <input type="text" id="empNoKtp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor NPWP</label>
+              <input type="text" id="empNpwp" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">No. BPJS Kesehatan</label>
+              <input type="text" id="empBpjsKes" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">No. BPJS Ketenagakerjaan</label>
+              <input type="text" id="empBpjsTk" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Bank</label>
+              <input type="text" id="empNamaBank" placeholder="Contoh: BCA / Mandiri" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nomor Rekening</label>
+              <input type="text" id="empNoRekening" placeholder="Contoh: 137000123456" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. RIWAYAT PENDIDIKAN & MULTI-SERTIFIKASI -->
+        <div class="border-t border-dark-border pt-4">
+          <h4 class="text-xs font-bold uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-sm"></i> 4. Riwayat Pendidikan & Sertifikasi (Bisa Lebih Dari 1)
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Pendidikan Terakhir</label>
+              <select id="empPendidikanTerakhir" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+                <option value="SMA / SMK">SMA / SMK</option>
+                <option value="D3">D3</option>
+                <option value="S1">S1</option>
+                <option value="S2">S2</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Instansi Pendidikan</label>
+              <input type="text" id="empInstansiPendidikan" placeholder="Universitas / Sekolah" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Jurusan / Program Studi</label>
+              <input type="text" id="empJurusan" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500">
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-semibold text-slate-300">Daftar Sertifikasi & Dokumen Sijil</label>
+              <button type="button" onclick="addSertifikasiRow()" class="px-3 py-1 bg-brand/25 hover:bg-brand/35 text-amber-400 text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> Tambah Sertifikasi Lainnya
+              </button>
+            </div>
+            <div id="sertifikasiListContainer" class="space-y-2"></div>
+          </div>
+        </div>
+
+        <!-- 5. UPLOAD DOKUMEN PRIBADI -->
+        <div class="border-t border-dark-border pt-4">
+          <h4 class="text-xs font-bold uppercase text-amber-400 tracking-wider mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-file-arrow-up text-sm"></i> 5. Upload Dokumen Pribadi
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Upload KTP -->
+            <div class="p-3 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2">
+              <label class="block text-xs font-semibold text-slate-300">Dokumen KTP</label>
+              <input type="file" accept=".pdf,image/*" onchange="handleDocFileUpload(this, 'docKtpData', 'previewKtp')" class="w-full text-[11px] text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-lg">
+              <input type="hidden" id="docKtpData">
+              <div id="previewKtp" class="text-[11px] text-amber-400 pt-1"></div>
+            </div>
+
+            <!-- Upload Kartu Keluarga -->
+            <div class="p-3 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2">
+              <label class="block text-xs font-semibold text-slate-300">Kartu Keluarga (KK)</label>
+              <input type="file" accept=".pdf,image/*" onchange="handleDocFileUpload(this, 'docKkData', 'previewKk')" class="w-full text-[11px] text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-lg">
+              <input type="hidden" id="docKkData">
+              <div id="previewKk" class="text-[11px] text-amber-400 pt-1"></div>
+            </div>
+
+            <!-- Upload BPJS Kesehatan -->
+            <div class="p-3 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2">
+              <label class="block text-xs font-semibold text-slate-300">BPJS Kesehatan</label>
+              <input type="file" accept=".pdf,image/*" onchange="handleDocFileUpload(this, 'docBpjsKesData', 'previewBpjsKes')" class="w-full text-[11px] text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-lg">
+              <input type="hidden" id="docBpjsKesData">
+              <div id="previewBpjsKes" class="text-[11px] text-amber-400 pt-1"></div>
+            </div>
+
+            <!-- Upload BPJS Ketenagakerjaan -->
+            <div class="p-3 bg-slate-900/50 border border-slate-700 rounded-xl space-y-2">
+              <label class="block text-xs font-semibold text-slate-300">BPJS Ketenagakerjaan</label>
+              <input type="file" accept=".pdf,image/*" onchange="handleDocFileUpload(this, 'docBpjsTkData', 'previewBpjsTk')" class="w-full text-[11px] text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-lg">
+              <input type="hidden" id="docBpjsTkData">
+              <div id="previewBpjsTk" class="text-[11px] text-amber-400 pt-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t border-dark-border">
+          <button type="button" onclick="closeModal('modalKaryawan')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand hover:bg-brand-hover text-slate-950 font-bold rounded-xl text-sm shadow-lg shadow-amber-500/20">Simpan Data Karyawan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL VIEW KARYAWAN A4 -->
+  <div id="modalViewKaryawan" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] rounded-xl shadow-2xl overflow-hidden my-6 p-8 relative flex flex-col justify-between">
+      <div class="absolute top-4 right-4 no-print flex gap-2">
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-print mr-1"></i> Cetak / Download PDF</button>
+        <button onclick="closeModal('modalViewKaryawan')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-xmark"></i> Tutup</button>
+      </div>
+      <div id="viewKaryawanContent" class="space-y-6 text-sm"></div>
+      <div class="text-center text-[10px] text-slate-400 border-t pt-4 mt-8">
+        <span id="printCompanyNameFooter">KSO LRS-TAL</span> - Dokumen Profil & Rekam Jejak Pegawai Resmi
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ASET -->
+  <div id="modalAset" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-dark-card border border-dark-border w-full max-w-xl rounded-2xl p-6 my-8">
+      <h3 id="modalAsetTitle" class="font-bold text-lg text-white mb-4">Form Aset</h3>
+      <form id="formAset" onsubmit="submitAset(event)" class="space-y-4">
+        <input type="hidden" id="astId">
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-xs text-slate-300">Kode Aset</label><input type="text" id="astCode" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+          <div><label class="text-xs text-slate-300">Nama Aset</label><input type="text" id="astName" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-xs text-slate-300">Kategori</label><select id="astCategory" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></select></div>
+          <div><label class="text-xs text-slate-300">Lokasi Fisik</label><select id="astLocation" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></select></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="text-xs text-slate-300">Merek</label><input type="text" id="astBrand" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+          <div><label class="text-xs text-slate-300">Model</label><input type="text" id="astModel" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+          <div><label class="text-xs text-slate-300">Serial Number</label><input type="text" id="astSerial" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-xs text-slate-300">Tanggal Beli</label><input type="date" id="astPurchaseDate" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+          <div><label class="text-xs text-slate-300">Harga Beli (Rp)</label><input type="number" id="astCost" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-300">Status Aset</label>
+            <select id="astStatus" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
+              <option value="Aktif">Aktif</option><option value="Rusak">Rusak</option><option value="Diperbaiki">Diperbaiki</option><option value="Dihapuskan">Dihapuskan</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-300">Upload Foto Aset (Maks 5)</label>
+            <input type="file" id="astPhotos" accept="image/*" multiple onchange="handlePhotoUpload(event)" class="w-full text-xs text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-xl">
+          </div>
+        </div>
+        <div id="photoPreviewContainer" class="flex gap-2 flex-wrap"></div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeModal('modalAset')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand text-slate-950 font-bold rounded-xl text-sm">Simpan Aset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL VIEW DETAIL ASET -->
+  <div id="modalViewAset" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] rounded-xl shadow-2xl overflow-hidden my-6 p-8 relative flex flex-col justify-between">
+      <div class="absolute top-4 right-4 no-print flex gap-2">
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-print mr-1"></i> Cetak / PDF</button>
+        <button onclick="closeModal('modalViewAset')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-xmark"></i> Tutup</button>
+      </div>
+      <div id="viewAssetContent" class="space-y-6 text-sm"></div>
+      <div class="text-center text-[10px] text-slate-400 border-t pt-4 mt-8">
+        Kartu Kendali Aset Perusahaan Resmi
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PENYERAHAN ASET -->
+  <div id="modalPeminjaman" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl p-6">
+      <h3 id="modalPeminjamanTitle" class="font-bold text-lg text-white mb-4">Pencatatan Penyerahan Aset</h3>
+      <form onsubmit="submitPeminjaman(event)" class="space-y-4">
+        <input type="hidden" id="assignId">
+        <div><label class="text-xs text-slate-300">Pilih Aset</label><select id="assignAsset" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></select></div>
+        <div><label class="text-xs text-slate-300">Pilih Karyawan Penanggung Jawab</label><select id="assignEmployee" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></select></div>
+        <div><label class="text-xs text-slate-300">Tanggal Penyerahan</label><input type="date" id="assignDate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        <div>
+          <label class="text-xs text-slate-300">Upload Dokumen Tanda Terima (Ditanda Tangani)</label>
+          <input type="file" id="assignSignedReceipt" accept=".pdf,image/*" onchange="handleSignedReceiptUpload(event)" class="w-full text-xs text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-xl mt-1">
+        </div>
+        <div id="signedReceiptPreview" class="text-xs text-amber-400"></div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeModal('modalPeminjaman')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand text-slate-950 font-bold rounded-xl text-sm">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PENGEMBALIAN ASET -->
+  <div id="modalPengembalian" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-dark-card border border-dark-border w-full max-w-sm rounded-2xl p-6 space-y-4">
+      <h3 class="font-bold text-lg text-white">Input Tanggal Pengembalian</h3>
+      <input type="hidden" id="returnAssignmentId">
+      <div>
+        <label class="text-xs text-slate-300">Tanggal Pengembalian</label>
+        <input type="date" id="returnDateInput" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white mt-1">
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeModal('modalPengembalian')" class="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Batal</button>
+        <button onclick="processReturn()" class="px-4 py-2 bg-brand text-slate-950 font-bold rounded-xl text-xs">Konfirmasi Pengembalian</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH KATEGORI / LOKASI -->
+  <div id="modalMaster" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-dark-card border border-dark-border w-full max-w-sm rounded-2xl p-6 space-y-4">
+      <h3 id="modalMasterTitle" class="font-bold text-lg text-white">Tambah Data</h3>
+      <input type="hidden" id="masterType">
+      <div><label id="masterLabel" class="text-xs text-slate-300">Nama</label><input type="text" id="masterInputName" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white mt-1"></div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeModal('modalMaster')" class="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs">Batal</button>
+        <button onclick="submitMasterData()" class="px-4 py-2 bg-brand text-slate-950 font-bold rounded-xl text-xs">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SERVIS -->
+  <div id="modalMaintenance" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-dark-card border border-dark-border w-full max-w-md rounded-2xl p-6">
+      <h3 id="modalMaintenanceTitle" class="font-bold text-lg text-white mb-4">Catat Perbaikan / Servis</h3>
+      <form onsubmit="submitMaintenance(event)" class="space-y-4">
+        <input type="hidden" id="maintId">
+        <div><label class="text-xs text-slate-300">Pilih Aset</label><select id="maintAsset" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></select></div>
+        <div><label class="text-xs text-slate-300">Tanggal Servis</label><input type="date" id="maintDate" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        <div><label class="text-xs text-slate-300">Biaya (Rp)</label><input type="number" id="maintCost" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></div>
+        <div><label class="text-xs text-slate-300">Detail Perbaikan</label><textarea id="maintDesc" rows="3" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white"></textarea></div>
+        <div>
+          <label class="text-xs text-slate-300">Upload Dokumen Nota Pembayaran Servis</label>
+          <input type="file" id="maintPaymentReceipt" accept=".pdf,image/*" onchange="handlePaymentReceiptUpload(event)" class="w-full text-xs text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-xl mt-1">
+        </div>
+        <div id="paymentReceiptPreview" class="text-xs text-amber-400"></div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeModal('modalMaintenance')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand text-slate-950 font-bold rounded-xl text-sm">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL VIEW SERVIS -->
+  <div id="modalViewMaintenance" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] rounded-xl shadow-2xl overflow-hidden my-6 p-8 relative flex flex-col justify-between">
+      <div class="absolute top-4 right-4 no-print flex gap-2">
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-print mr-1"></i> Cetak / PDF</button>
+        <button onclick="closeModal('modalViewMaintenance')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg shadow"><i class="fa-solid fa-xmark"></i> Tutup</button>
+      </div>
+      <div id="viewMaintenanceContent" class="space-y-6 text-sm"></div>
+      <div class="text-center text-[10px] text-slate-400 border-t pt-4 mt-8">
+        Berita Acara & Nota Pemeliharaan Aset Resmi
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CETAK TANDA TERIMA -->
+  <div id="modalPrint" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 w-full max-w-[210mm] min-h-[297mm] rounded-xl shadow-2xl p-8 relative flex flex-col justify-between my-6">
+      <div class="absolute top-4 right-4 no-print flex gap-2">
+        <button onclick="window.print()" class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded-lg"><i class="fa-solid fa-print mr-1"></i> Cetak Dokumen</button>
+        <button onclick="closeModal('modalPrint')" class="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-lg"><i class="fa-solid fa-xmark"></i> Tutup</button>
+      </div>
+      <div id="printReceiptBody" class="space-y-6 text-sm"></div>
+      <div class="text-center text-[10px] text-slate-400 border-t pt-4 mt-8">
+        Berita Acara Penyerahan & Pengembalian Aset Perusahaan Resmi
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================= SCRIPT UTAMA & AUTENTIKASI =================
+    let appData = {
+      employees: [
+        {
+          employee_id: 'EMP-1001', nip: 'LRS-001', nik: '320198765432001', nama: 'Budi Santoso',
+          tempat_lahir: 'Jakarta', tanggal_lahir: '1988-05-12', jenis_kelamin: 'Laki-laki', agama: 'Islam',
+          status_nikah: 'Menikah', no_hp: '081298765432', email: 'budi.santoso@kso-lrstal.com',
+          kontak_darurat: 'Siti (Istri) - 081211112222', alamat_ktp: 'Jl. Merdeka No. 45', alamat_domisili: 'Basecamp Site Lahat',
+          jabatan: 'Site Manager', departemen: 'Project Management', tgl_mulai_kerja: '2021-02-01',
+          lokasi_kerja: 'Site Lahat', status_kepegawaian: 'Karyawan Tetap', akhir_kontrak: '',
+          no_ktp: '320198765432001', npwp: '12.345.678.9-012.000', bpjs_kes: '000123456789', bpjs_tk: '19012345678',
+          nama_bank: 'Mandiri', no_rekening: '137000123456', pendidikan_terakhir: 'S1',
+          instansi_pendidikan: 'Universitas Indonesia', jurusan: 'Teknik Sipil',
+          sertifikasi_json: JSON.stringify([{ nama: 'POP Minerba', file: '' }, { nama: 'Ahli K3', file: '' }]),
+          doc_ktp: '', doc_kk: '', doc_bpjs_kes: '', doc_bpjs_tk: ''
+        },
+        {
+          employee_id: 'EMP-1002', nip: 'LRS-002', nik: '320198765432002', nama: 'Dewi Lestari',
+          tempat_lahir: 'Bandung', tanggal_lahir: '1992-08-20', jenis_kelamin: 'Perempuan', agama: 'Islam',
+          status_nikah: 'Belum Menikah', no_hp: '081398765433', email: 'dewi.lestari@kso-lrstal.com',
+          kontak_darurat: 'Bapak Andi - 081322223333', alamat_ktp: 'Jl. Asia Afrika No. 10', alamat_domisili: 'HO Jakarta',
+          jabatan: 'HSE Officer', departemen: 'HSE & Safety', tgl_mulai_kerja: '2022-06-15',
+          lokasi_kerja: 'Head Office Jakarta', status_kepegawaian: 'Karyawan Tetap', akhir_kontrak: '',
+          no_ktp: '320198765432002', npwp: '12.345.678.9-013.000', bpjs_kes: '000123456790', bpjs_tk: '19012345679',
+          nama_bank: 'BCA', no_rekening: '128000123456', pendidikan_terakhir: 'S1',
+          instansi_pendidikan: 'ITB', jurusan: 'Teknik Lingkungan',
+          sertifikasi_json: JSON.stringify([{ nama: 'Ahli K3 Umum', file: '' }]),
+          doc_ktp: '', doc_kk: '', doc_bpjs_kes: '', doc_bpjs_tk: ''
+        }
+      ],
+      categories: [{ category_id: 1, category_name: 'Elektronik & IT' }, { category_id: 2, category_name: 'Alat Berat' }],
+      locations: [{ location_id: 1, location_name: 'Site LRS - Lahat' }, { location_id: 2, location_name: 'Head Office Jakarta' }],
+      assets: [{ asset_id: 1, asset_code: 'AST-2026-001', asset_name: 'Excavator PC200-8', category_id: 2, location_id: 1, brand: 'Komatsu', model_number: 'PC200-8', serial_number: 'KMTPC98123', purchase_date: '2023-01-15', purchase_cost: 1250000000, status: 'Aktif', photos_json: JSON.stringify([]) }],
+      assignments: [{ assignment_id: 'ASG-001', asset_id: 1, employee_id: 'EMP-1001', assigned_date: '2023-02-01', returned_date: '', signed_receipt_json: JSON.stringify([]) }],
+      maintenances: [{ maintenance_id: 'MNT-001', asset_id: 1, maintenance_date: '2024-05-10', cost: 5000000, description: 'Ganti oli berkala dan filter hidrolik', payment_receipt_json: JSON.stringify([]) }],
+      settings: {
+        company_name: 'KSO LRS-TAL',
+        company_npwp: '01.234.567.8-901.000',
+        company_address: 'Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan',
+        company_logo: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+      }
+    };
+
+    let tempAssetPhotos = [];
+    let tempSignedReceipt = [];
+    let tempPaymentReceipt = [];
+    let currentUserRole = '';
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUsername').value.trim();
+      const pass = document.getElementById('loginPassword').value.trim();
+
+      if (user === 'AdminSuper' && pass === 'AdminSuper123') {
+        initSession('Super Admin');
+      } else if (user === 'AdminHC' && pass === 'AdminHC123') {
+        initSession('Admin HC');
+      } else if (user === 'AdminGA' && pass === 'AdminGA123') {
+        initSession('Admin GA');
+      } else {
+        Swal.fire({ icon: 'error', title: 'Login Gagal', text: 'Username atau Password salah!', background: '#1e293b', color: '#fff' });
+      }
+    }
+
+    function initSession(role) {
+      currentUserRole = role;
+      localStorage.setItem('lrs_session_role', role);
+      document.getElementById('loginOverlay').classList.add('hidden');
+      document.getElementById('appMainWrapper').classList.remove('hidden');
+      document.getElementById('headerUserTitle').innerText = role;
+
+      applyRoleAccessRestrictions();
+      switchTab('dashboard');
+      loadAllDataFromBackend();
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('lrs_session_role');
+      currentUserRole = '';
+      document.getElementById('appMainWrapper').classList.add('hidden');
+      document.getElementById('loginOverlay').classList.remove('hidden');
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+    }
+
+    window.onload = function() {
+      const savedRole = localStorage.getItem('lrs_session_role');
+      if (savedRole) {
+        initSession(savedRole);
+      }
+    };
+
+    function applyRoleAccessRestrictions() {
+      const navKaryawan = document.getElementById('nav-karyawan');
+      const navMaster = document.getElementById('nav-master');
+      const navAset = document.getElementById('nav-aset');
+      const navPeminjaman = document.getElementById('nav-peminjaman');
+      const navPemeliharaan = document.getElementById('nav-pemeliharaan');
+      const navSettings = document.getElementById('nav-settings');
+
+      [navKaryawan, navMaster, navAset, navPeminjaman, navPemeliharaan, navSettings].forEach(el => el.style.display = 'flex');
+
+      if (currentUserRole === 'Admin HC') {
+        navMaster.style.display = 'none';
+        navAset.style.display = 'none';
+        navPeminjaman.style.display = 'none';
+        navPemeliharaan.style.display = 'none';
+        navSettings.style.display = 'none';
+      } else if (currentUserRole === 'Admin GA') {
+        navKaryawan.style.display = 'none';
+        navSettings.style.display = 'none';
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('hidden');
+      sidebar.classList.toggle('flex');
+    }
+
+    function switchTab(tabName) {
+      ['dashboard', 'karyawan', 'master', 'aset', 'peminjaman', 'pemeliharaan', 'settings'].forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if(el) el.classList.toggle('hidden', t !== tabName);
+        const nav = document.getElementById('nav-' + t);
+        if(nav) {
+          nav.classList.toggle('bg-slate-800', t === tabName);
+          nav.classList.toggle('text-amber-400', t === tabName);
+        }
+      });
+    }
+
+    function loadAllDataFromBackend() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(data => {
+            if (data && !data.error && data.employees) { 
+              appData = data; 
+            }
+            applySettings();
+            renderAll();
+          })
+          .withFailureHandler(err => {
+            console.warn("Gagal memuat dari backend, menggunakan data lokal:", err);
+            applySettings();
+            renderAll();
+          })
+          .getAllData();
+      } else {
+        applySettings();
+        renderAll();
+      }
+    }
+
+    function applySettings() {
+      const s = appData.settings || {};
+      const cName = s.company_name || 'KSO LRS-TAL';
+      document.getElementById('sidebarCompanyName').innerText = cName;
+      document.getElementById('headerCompanyName').innerText = 'Portal Pengurusan ' + cName;
+      document.getElementById('setCompanyName').value = cName;
+      document.getElementById('setCompanyNpwp').value = s.company_npwp || '';
+      document.getElementById('setCompanyAddress').value = s.company_address || '';
+      document.getElementById('setCompanyLogoUrl').value = s.company_logo || '';
+      
+      const logoContainer = document.getElementById('logoPreviewContainer');
+      if (s.company_logo) {
+        logoContainer.innerHTML = `<img src="${s.company_logo}" class="w-16 h-16 object-contain border border-slate-700 rounded bg-slate-900 p-1">`;
+      } else {
+        logoContainer.innerHTML = '';
+      }
+    }
+
+    function handleLogoUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('setCompanyLogoUrl').value = ev.target.result;
+          document.getElementById('logoPreviewContainer').innerHTML = `<img src="${ev.target.result}" class="w-16 h-16 object-contain border border-slate-700 rounded bg-slate-900 p-1">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function submitSettings(e) {
+      e.preventDefault();
+      const payload = {
+        company_name: document.getElementById('setCompanyName').value,
+        company_npwp: document.getElementById('setCompanyNpwp').value,
+        company_address: document.getElementById('setCompanyAddress').value,
+        company_logo: document.getElementById('setCompanyLogoUrl').value
+      };
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(res => {
+          Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message, background: '#1e293b', color: '#fff' });
+          loadAllDataFromBackend();
+        }).saveSettings(payload);
+      } else {
+        appData.settings = payload;
+        applySettings();
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Pengaturan disimpan', background: '#1e293b', color: '#fff' });
+      }
+    }
+
+    function renderAll() {
+      renderKaryawan();
+      renderMasterData();
+      renderAset();
+      renderPeminjaman();
+      renderMaintenance();
+      loadStats();
+    }
+
+    function loadStats() {
+      document.getElementById('stat-karyawan').innerText = appData.employees.length;
+      document.getElementById('stat-aset').innerText = appData.assets.length;
+      document.getElementById('stat-dipinjam').innerText = appData.assignments.filter(a => !a.returned_date).length;
+      document.getElementById('stat-servis').innerText = appData.maintenances.length;
+    }
+
+    // Helper Upload File Pribadi
+    function handleDocFileUpload(input, hiddenId, previewId) {
+      const file = input.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById(hiddenId).value = e.target.result;
+          document.getElementById(previewId).innerHTML = `<i class="fa-solid fa-check text-emerald-400 mr-1"></i> File terupload (${file.name})`;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      if(!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // --- Master Data ---
+    function openModalAddCategory() {
+      document.getElementById('masterType').value = 'category';
+      document.getElementById('masterLabel').innerText = 'Nama Kategori Aset';
+      document.getElementById('masterInputName').value = '';
+      document.getElementById('modalMaster').classList.remove('hidden');
+    }
+    function openModalAddLocation() {
+      document.getElementById('masterType').value = 'location';
+      document.getElementById('masterLabel').innerText = 'Nama Lokasi Fisik';
+      document.getElementById('masterInputName').value = '';
+      document.getElementById('modalMaster').classList.remove('hidden');
+    }
+    function submitMasterData() {
+      const type = document.getElementById('masterType').value;
+      const name = document.getElementById('masterInputName').value;
+      if(!name) return;
+      const fn = type === 'category' ? 'saveCategory' : 'saveLocation';
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalMaster'); loadAllDataFromBackend(); })[fn](name);
+      } else {
+        if(type === 'category') appData.categories.push({ category_id: Date.now(), category_name: name });
+        else appData.locations.push({ location_id: Date.now(), location_name: name });
+        closeModal('modalMaster'); renderAll();
+      }
+    }
+    function renderMasterData() {
+      document.getElementById('tableCategoryBody').innerHTML = appData.categories.map(c => `<tr><td class="p-3">${c.category_id}</td><td class="p-3">${escapeHtml(c.category_name)}</td><td class="p-3 text-right"><button onclick="deleteRecord('categories', 0, '${c.category_id}')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+      document.getElementById('tableLocationBody').innerHTML = appData.locations.map(l => `<tr><td class="p-3">${l.location_id}</td><td class="p-3">${escapeHtml(l.location_name)}</td><td class="p-3 text-right"><button onclick="deleteRecord('locations', 0, '${l.location_id}')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+    }
+
+    // --- Karyawan ---
+    function toggleAkhirKontrak() {
+      const status = document.getElementById('empStatusKepegawaian').value;
+      const container = document.getElementById('containerAkhirKontrak');
+      if(status === 'Karyawan Kontrak (PKWT)') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+        document.getElementById('empAkhirKontrak').value = '';
+      }
+    }
+
+    function addSertifikasiRow(nama = '', file = '') {
+      const container = document.getElementById('sertifikasiListContainer');
+      const rowId = 'cert_row_' + Date.now() + Math.random().toString(36).substring(2, 5);
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2 p-2 bg-slate-900/50 border border-slate-700 rounded-xl';
+      div.id = rowId;
+      div.innerHTML = `
+        <input type="text" placeholder="Nama Sertifikat / Pelatihan" value="${escapeHtml(nama)}" class="cert-name flex-1 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500">
+        <input type="file" accept=".pdf,image/*" onchange="handleCertRowFile(this)" class="cert-file text-[10px] text-slate-400 file:py-1 file:px-2 file:bg-slate-800 file:text-amber-400 rounded-lg">
+        <input type="hidden" class="cert-file-data" value="${escapeHtml(file)}">
+        <button type="button" onclick="document.getElementById('${rowId}').remove()" class="p-1.5 text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+      `;
+      container.appendChild(div);
+    }
+
+    function handleCertRowFile(input) {
+      const file = input.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          input.nextElementSibling.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function openModalKaryawan(isEdit = false, id = null) {
+      document.getElementById('modalKaryawanTitle').innerText = isEdit ? 'Edit Data Karyawan' : 'Tambah Karyawan Baru';
+      const container = document.getElementById('sertifikasiListContainer');
+      container.innerHTML = '';
+
+      // Clear preview
+      ['previewKtp', 'previewKk', 'previewBpjsKes', 'previewBpjsTk'].forEach(id => document.getElementById(id).innerHTML = '');
+      ['docKtpData', 'docKkData', 'docBpjsKesData', 'docBpjsTkData'].forEach(id => document.getElementById(id).value = '');
+
+      if(isEdit && id) {
+        const emp = appData.employees.find(e => e.employee_id === id);
+        if(emp) {
+          document.getElementById('empId').value = emp.employee_id;
+          document.getElementById('empNama').value = emp.nama || '';
+          document.getElementById('empTempatLahir').value = emp.tempat_lahir || '';
+          document.getElementById('empTanggalLahir').value = emp.tanggal_lahir || '';
+          document.getElementById('empJenisKelamin').value = emp.jenis_kelamin || 'Laki-laki';
+          document.getElementById('empAgama').value = emp.agama || 'Islam';
+          document.getElementById('empStatusNikah').value = emp.status_nikah || 'Belum Menikah';
+          document.getElementById('empHp').value = emp.no_hp || '';
+          document.getElementById('empEmail').value = emp.email || '';
+          document.getElementById('empKontakDarurat').value = emp.kontak_darurat || '';
+          document.getElementById('empAlamatKtp').value = emp.alamat_ktp || '';
+          document.getElementById('empAlamatDomisili').value = emp.alamat_domisili || '';
+          document.getElementById('empNip').value = emp.nip || '';
+          document.getElementById('empNik').value = emp.nik || '';
+          document.getElementById('empJabatan').value = emp.jabatan || '';
+          document.getElementById('empDepartemen').value = emp.departemen || 'Project Management';
+          document.getElementById('empTglMulaiKerja').value = emp.tgl_mulai_kerja || '';
+          document.getElementById('empLokasiKerja').value = emp.lokasi_kerja || '';
+          document.getElementById('empStatusKepegawaian').value = emp.status_kepegawaian || 'Karyawan Tetap';
+          toggleAkhirKontrak();
+          document.getElementById('empAkhirKontrak').value = emp.akhir_kontrak || '';
+          document.getElementById('empNoKtp').value = emp.no_ktp || emp.nik || '';
+          document.getElementById('empNpwp').value = emp.npwp || '';
+          document.getElementById('empBpjsKes').value = emp.bpjs_kes || '';
+          document.getElementById('empBpjsTk').value = emp.bpjs_tk || '';
+          document.getElementById('empNamaBank').value = emp.nama_bank || '';
+          document.getElementById('empNoRekening').value = emp.no_rekening || '';
+          document.getElementById('empPendidikanTerakhir').value = emp.pendidikan_terakhir || 'S1';
+          document.getElementById('empInstansiPendidikan').value = emp.instansi_pendidikan || '';
+          document.getElementById('empJurusan').value = emp.jurusan || '';
+
+          // Set dokumen pribadi jika ada
+          document.getElementById('docKtpData').value = emp.doc_ktp || '';
+          document.getElementById('docKkData').value = emp.doc_kk || '';
+          document.getElementById('docBpjsKesData').value = emp.doc_bpjs_kes || '';
+          document.getElementById('docBpjsTkData').value = emp.doc_bpjs_tk || '';
+
+          if(emp.doc_ktp) document.getElementById('previewKtp').innerHTML = `<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Tersimpan`;
+          if(emp.doc_kk) document.getElementById('previewKk').innerHTML = `<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Tersimpan`;
+          if(emp.doc_bpjs_kes) document.getElementById('previewBpjsKes').innerHTML = `<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Tersimpan`;
+          if(emp.doc_bpjs_tk) document.getElementById('previewBpjsTk').innerHTML = `<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Tersimpan`;
+
+          let certs = [];
+          try { certs = typeof emp.sertifikasi_json === 'string' ? JSON.parse(emp.sertifikasi_json) : (emp.sertifikasi_json || []); } catch(e){ certs = []; }
+          if(certs.length > 0) {
+            certs.forEach(c => addSertifikasiRow(c.nama, c.file));
+          } else {
+            addSertifikasiRow();
+          }
+        }
+      } else {
+        document.getElementById('formKaryawan').reset();
+        document.getElementById('empId').value = '';
+        toggleAkhirKontrak();
+        addSertifikasiRow();
+      }
+      document.getElementById('modalKaryawan').classList.remove('hidden');
+    }
+
+    function submitKaryawan(e) {
+      e.preventDefault();
+      const certRows = document.querySelectorAll('#sertifikasiListContainer > div');
+      const certs = [];
+      certRows.forEach(row => {
+        const name = row.querySelector('.cert-name').value;
+        const file = row.querySelector('.cert-file-data').value;
+        if(name) {
+          certs.push({ nama: name, file: file });
+        }
+      });
+
+      const payload = {
+        employee_id: document.getElementById('empId').value || 'EMP-' + Date.now().toString().slice(-4),
+        nip: document.getElementById('empNip').value,
+        nik: document.getElementById('empNik').value,
+        nama: document.getElementById('empNama').value,
+        tempat_lahir: document.getElementById('empTempatLahir').value,
+        tanggal_lahir: document.getElementById('empTanggalLahir').value,
+        jenis_kelamin: document.getElementById('empJenisKelamin').value,
+        agama: document.getElementById('empAgama').value,
+        status_nikah: document.getElementById('empStatusNikah').value,
+        no_hp: document.getElementById('empHp').value,
+        email: document.getElementById('empEmail').value,
+        kontak_darurat: document.getElementById('empKontakDarurat').value,
+        alamat_ktp: document.getElementById('empAlamatKtp').value,
+        alamat_domisili: document.getElementById('empAlamatDomisili').value,
+        jabatan: document.getElementById('empJabatan').value,
+        departemen: document.getElementById('empDepartemen').value,
+        tgl_mulai_kerja: document.getElementById('empTglMulaiKerja').value,
+        lokasi_kerja: document.getElementById('empLokasiKerja').value,
+        status_kepegawaian: document.getElementById('empStatusKepegawaian').value,
+        akhir_kontrak: document.getElementById('empAkhirKontrak').value,
+        no_ktp: document.getElementById('empNoKtp').value,
+        npwp: document.getElementById('empNpwp').value,
+        bpjs_kes: document.getElementById('empBpjsKes').value,
+        bpjs_tk: document.getElementById('empBpjsTk').value,
+        nama_bank: document.getElementById('empNamaBank').value,
+        no_rekening: document.getElementById('empNoRekening').value,
+        pendidikan_terakhir: document.getElementById('empPendidikanTerakhir').value,
+        instansi_pendidikan: document.getElementById('empInstansiPendidikan').value,
+        jurusan: document.getElementById('empJurusan').value,
+        sertifikasi_json: JSON.stringify(certs),
+        doc_ktp: document.getElementById('docKtpData').value,
+        doc_kk: document.getElementById('docKkData').value,
+        doc_bpjs_kes: document.getElementById('docBpjsKesData').value,
+        doc_bpjs_tk: document.getElementById('docBpjsTkData').value
+      };
+
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalKaryawan'); loadAllDataFromBackend(); }).saveEmployee(payload);
+      } else {
+        const idx = appData.employees.findIndex(emp => emp.employee_id === payload.employee_id);
+        if(idx >= 0) {
+          appData.employees[idx] = payload;
+        } else {
+          appData.employees.push(payload);
+        }
+        closeModal('modalKaryawan');
+        renderAll();
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data karyawan berhasil disimpan.', background: '#1e293b', color: '#fff', timer: 1500, showConfirmButton: false });
+      }
+    }
+
+    function renderKaryawan() {
+      const q = (document.getElementById('searchKaryawan')?.value || '').toLowerCase();
+      const filtered = appData.employees.filter(e => 
+        (e.nama && e.nama.toLowerCase().includes(q)) ||
+        (e.nip && e.nip.toLowerCase().includes(q)) ||
+        (e.nik && e.nik.toLowerCase().includes(q)) ||
+        (e.jabatan && e.jabatan.toLowerCase().includes(q))
+      );
+
+      document.getElementById('countKaryawan').innerText = filtered.length;
+      document.getElementById('tableKaryawanBody').innerHTML = filtered.map(emp => {
+        let certs = [];
+        try { certs = typeof emp.sertifikasi_json === 'string' ? JSON.parse(emp.sertifikasi_json) : (emp.sertifikasi_json || []); } catch(e){}
+
+        return `
+          <tr class="hover:bg-slate-800/50 transition">
+            <td class="py-3 px-4">
+              <div class="font-bold text-white">${escapeHtml(emp.nama)}</div>
+              <div class="text-xs text-amber-400">NIP: ${escapeHtml(emp.nip)} | NIK: ${escapeHtml(emp.nik)}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="font-semibold text-slate-200">${escapeHtml(emp.jabatan)}</div>
+              <div class="text-xs text-slate-400">${escapeHtml(emp.departemen)}</div>
+            </td>
+            <td class="py-3 px-4 text-xs">
+              <div><i class="fa-solid fa-phone mr-1 text-slate-500"></i>${escapeHtml(emp.no_hp || '-')}</div>
+              <div class="text-slate-400"><i class="fa-solid fa-location-dot mr-1 text-slate-500"></i>${escapeHtml(emp.lokasi_kerja || '-')}</div>
+            </td>
+            <td class="py-3 px-4 text-xs">
+              ${certs.length ? certs.map(c => `<span class="inline-block bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-700 mr-1 mb-1 text-amber-300">${escapeHtml(c.nama)}</span>`).join('') : '<span class="text-slate-500">-</span>'}
+            </td>
+            <td class="py-3 px-4 text-xs">
+              <div>NPWP: ${escapeHtml(emp.npwp || '-')}</div>
+              <div class="text-slate-400">Bank: ${escapeHtml(emp.nama_bank || '-')} ${escapeHtml(emp.no_rekening || '-')}</div>
+            </td>
+            <td class="py-3 px-4 text-center space-x-2">
+              <button onclick="viewKaryawan('${emp.employee_id}')" title="Detail A4" class="p-1.5 bg-slate-800 hover:bg-amber-500/20 text-amber-400 rounded-lg border border-slate-700 transition"><i class="fa-solid fa-eye"></i></button>
+              <button onclick="openModalKaryawan(true, '${emp.employee_id}')" title="Edit" class="p-1.5 bg-slate-800 hover:bg-blue-500/20 text-blue-400 rounded-lg border border-slate-700 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteRecord('employees', 0, '${emp.employee_id}')" title="Hapus" class="p-1.5 bg-slate-800 hover:bg-rose-500/20 text-rose-400 rounded-lg border border-slate-700 transition"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewKaryawan(id) {
+      const emp = appData.employees.find(e => e.employee_id === id);
+      if(!emp) return;
+      let certs = [];
+      try { certs = typeof emp.sertifikasi_json === 'string' ? JSON.parse(emp.sertifikasi_json) : (emp.sertifikasi_json || []); } catch(e){}
+      const s = appData.settings || {};
+
+      document.getElementById('printCompanyNameFooter').innerText = s.company_name || 'KSO LRS-TAL';
+
+      document.getElementById('viewKaryawanContent').innerHTML = `
+        <div class="flex items-center justify-between border-b pb-4">
+          <div class="flex items-center gap-3">
+            <img src="${s.company_logo || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" class="w-12 h-12 object-contain">
+            <div>
+              <h2 class="text-xl font-bold uppercase text-slate-900">${escapeHtml(s.company_name || 'KSO LRS-TAL')}</h2>
+              <p class="text-xs text-slate-500">${escapeHtml(s.company_address || '')} | NPWP: ${escapeHtml(s.company_npwp || '-')}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <h3 class="text-sm font-bold uppercase text-amber-600">KARTU PROFIL KARYAWAN</h3>
+            <p class="text-xs text-slate-500">ID: ${emp.employee_id}</p>
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b pb-1">1. Informasi Pribadi</h4>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div><strong>Nama Lengkap:</strong> ${escapeHtml(emp.nama)}</div>
+            <div><strong>NIP / NIK:</strong> ${escapeHtml(emp.nip)} / ${escapeHtml(emp.nik)}</div>
+            <div><strong>Tempat, Tgl Lahir:</strong> ${escapeHtml(emp.tempat_lahir || '-')}, ${escapeHtml(emp.tanggal_lahir || '-')}</div>
+            <div><strong>Jenis Kelamin / Agama:</strong> ${escapeHtml(emp.jenis_kelamin || '-')} / ${escapeHtml(emp.agama || '-')}</div>
+            <div><strong>Status Pernikahan:</strong> ${escapeHtml(emp.status_nikah || '-')}</div>
+            <div><strong>No. HP / Email:</strong> ${escapeHtml(emp.no_hp || '-')} / ${escapeHtml(emp.email || '-')}</div>
+            <div><strong>Kontak Darurat:</strong> ${escapeHtml(emp.kontak_darurat || '-')}</div>
+            <div><strong>Alamat KTP:</strong> ${escapeHtml(emp.alamat_ktp || '-')}</div>
+            <div><strong>Alamat Domisili:</strong> ${escapeHtml(emp.alamat_domisili || '-')}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b pb-1">2. Informasi Pekerjaan</h4>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div><strong>Jabatan:</strong> ${escapeHtml(emp.jabatan)}</div>
+            <div><strong>Divisi / Departemen:</strong> ${escapeHtml(emp.departemen)}</div>
+            <div><strong>Lokasi Kerja:</strong> ${escapeHtml(emp.lokasi_kerja || '-')}</div>
+            <div><strong>Tanggal Mulai Kerja:</strong> ${escapeHtml(emp.tgl_mulai_kerja || '-')}</div>
+            <div><strong>Status Kepegawaian:</strong> ${escapeHtml(emp.status_kepegawaian || '-')} ${emp.akhir_kontrak ? '(s.d. ' + emp.akhir_kontrak + ')' : ''}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b pb-1">3. Data Administratif & Keuangan</h4>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div><strong>No. KTP:</strong> ${escapeHtml(emp.no_ktp || emp.nik || '-')}</div>
+            <div><strong>NPWP:</strong> ${escapeHtml(emp.npwp || '-')}</div>
+            <div><strong>BPJS Kes / TK:</strong> ${escapeHtml(emp.bpjs_kes || '-')} / ${escapeHtml(emp.bpjs_tk || '-')}</div>
+            <div><strong>Rekening Bank:</strong> ${escapeHtml(emp.nama_bank || '-')} - ${escapeHtml(emp.no_rekening || '-')}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b pb-1">4. Pendidikan & Lampiran Sertifikat</h4>
+          <div class="text-xs mb-3"><strong>Pendidikan:</strong> ${escapeHtml(emp.pendidikan_terakhir || '-')} ${escapeHtml(emp.instansi_pendidikan ? 'di ' + emp.instansi_pendidikan : '')} (${escapeHtml(emp.jurusan || '-')})</div>
+          <div class="grid grid-cols-2 gap-4 pt-2">
+            ${certs.length ? certs.map(c => `
+              <div class="border border-slate-300 rounded p-3 text-center">
+                <p class="text-xs font-bold mb-2 text-slate-800">${escapeHtml(c.nama)}</p>
+                ${c.file && c.file.startsWith('data:image') ? `<img src="${c.file}" class="w-full h-32 object-contain border rounded">` : `<a href="${c.file || '#'}" target="_blank" class="text-blue-600 underline text-xs">Lihat Dokumen Sertifikat</a>`}
+              </div>
+            `).join('') : '<span class="text-xs text-slate-500">Tidak ada lampiran sertifikat</span>'}
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 border-b pb-1">5. Dokumen Pribadi</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="border rounded p-2 text-center">
+              <span class="block font-semibold mb-1">KTP</span>
+              ${emp.doc_ktp ? `<a href="${emp.doc_ktp}" target="_blank" class="text-blue-600 underline">Lihat File</a>` : '<span class="text-slate-400">Belum ada</span>'}
+            </div>
+            <div class="border rounded p-2 text-center">
+              <span class="block font-semibold mb-1">KK</span>
+              ${emp.doc_kk ? `<a href="${emp.doc_kk}" target="_blank" class="text-blue-600 underline">Lihat File</a>` : '<span class="text-slate-400">Belum ada</span>'}
+            </div>
+            <div class="border rounded p-2 text-center">
+              <span class="block font-semibold mb-1">BPJS Kes</span>
+              ${emp.doc_bpjs_kes ? `<a href="${emp.doc_bpjs_kes}" target="_blank" class="text-blue-600 underline">Lihat File</a>` : '<span class="text-slate-400">Belum ada</span>'}
+            </div>
+            <div class="border rounded p-2 text-center">
+              <span class="block font-semibold mb-1">BPJS TK</span>
+              ${emp.doc_bpjs_tk ? `<a href="${emp.doc_bpjs_tk}" target="_blank" class="text-blue-600 underline">Lihat File</a>` : '<span class="text-slate-400">Belum ada</span>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-8 grid grid-cols-2 text-center text-xs mt-auto">
+          <div><p class="mb-16">Mengetahui,<br><strong>Manager HC KSO LRS-TAL</strong></p><p class="underline font-bold">( .................................... )</p></div>
+          <div><p class="mb-16">Dibuat Oleh,<br><strong>Admin HR & Operations</strong></p><p class="underline font-bold">( .................................... )</p></div>
+        </div>
+      `;
+      document.getElementById('modalViewKaryawan').classList.remove('hidden');
+    }
+
+    // --- Asset CRUD & Logics ---
+    function openModalAset(isEdit = false, id = null) {
+      const catSelect = document.getElementById('astCategory');
+      const locSelect = document.getElementById('astLocation');
+      catSelect.innerHTML = appData.categories.map(c => `<option value="${c.category_id}">${escapeHtml(c.category_name)}</option>`).join('');
+      locSelect.innerHTML = appData.locations.map(l => `<option value="${l.location_id}">${escapeHtml(l.location_name)}</option>`).join('');
+      tempAssetPhotos = [];
+      document.getElementById('photoPreviewContainer').innerHTML = '';
+
+      if(isEdit && id) {
+        const ast = appData.assets.find(a => String(a.asset_id) === String(id));
+        if(ast) {
+          document.getElementById('astId').value = ast.asset_id;
+          document.getElementById('astCode').value = ast.asset_code || '';
+          document.getElementById('astName').value = ast.asset_name || '';
+          document.getElementById('astCategory').value = ast.category_id || '';
+          document.getElementById('astLocation').value = ast.location_id || '';
+          document.getElementById('astBrand').value = ast.brand || '';
+          document.getElementById('astModel').value = ast.model_number || '';
+          document.getElementById('astSerial').value = ast.serial_number || '';
+          document.getElementById('astPurchaseDate').value = ast.purchase_date || '';
+          document.getElementById('astCost').value = ast.purchase_cost || '';
+          document.getElementById('astStatus').value = ast.status || 'Aktif';
+          try { tempAssetPhotos = typeof ast.photos_json === 'string' ? JSON.parse(ast.photos_json) : (ast.photos_json || []); } catch(e){}
+          renderPhotoPreviews();
+        }
+      } else {
+        document.getElementById('formAset').reset();
+        document.getElementById('astId').value = '';
+      }
+      document.getElementById('modalAset').classList.remove('hidden');
+    }
+
+    function handlePhotoUpload(e) {
+      const files = e.target.files;
+      if(files.length + tempAssetPhotos.length > 5) {
+        Swal.fire({ icon: 'warning', title: 'Batas Upload', text: 'Maksimal 5 foto per aset.', background: '#1e293b', color: '#fff' });
+        return;
+      }
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          tempAssetPhotos.push(ev.target.result);
+          renderPhotoPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPhotoPreviews() {
+      const container = document.getElementById('photoPreviewContainer');
+      container.innerHTML = tempAssetPhotos.map((src, i) => `
+        <div class="relative w-14 h-14 border border-slate-700 rounded overflow-hidden">
+          <img src="${src}" class="w-full h-full object-cover">
+          <button type="button" onclick="tempAssetPhotos.splice(${i}, 1); renderPhotoPreviews();" class="absolute top-0 right-0 bg-rose-600 text-white w-4 h-4 text-[10px] flex items-center justify-center">×</button>
+        </div>
+      `).join('');
+    }
+
+    function submitAset(e) {
+      e.preventDefault();
+      const payload = {
+        asset_id: document.getElementById('astId').value || Date.now(),
+        asset_code: document.getElementById('astCode').value,
+        asset_name: document.getElementById('astName').value,
+        category_id: document.getElementById('astCategory').value,
+        location_id: document.getElementById('astLocation').value,
+        brand: document.getElementById('astBrand').value,
+        model_number: document.getElementById('astModel').value,
+        serial_number: document.getElementById('astSerial').value,
+        purchase_date: document.getElementById('astPurchaseDate').value,
+        purchase_cost: document.getElementById('astCost').value,
+        status: document.getElementById('astStatus').value,
+        photos_json: JSON.stringify(tempAssetPhotos)
+      };
+
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalAset'); loadAllDataFromBackend(); }).saveAsset(payload);
+      } else {
+        const idx = appData.assets.findIndex(a => String(a.asset_id) === String(payload.asset_id));
+        if(idx >= 0) appData.assets[idx] = payload; else appData.assets.push(payload);
+        closeModal('modalAset'); renderAll();
+      }
+    }
+
+    function renderAset() {
+      document.getElementById('tableAsetBody').innerHTML = appData.assets.map(ast => {
+        const cat = appData.categories.find(c => String(c.category_id) === String(ast.category_id))?.category_name || '-';
+        const loc = appData.locations.find(l => String(l.location_id) === String(ast.location_id))?.location_name || '-';
+        const activeAssign = appData.assignments.find(a => String(a.asset_id) === String(ast.asset_id) && !a.returned_date);
+        const holder = activeAssign ? (appData.employees.find(e => String(e.employee_id) === String(activeAssign.employee_id))?.nama || 'Terpinjam') : 'Tersedia di Gudang';
+
+        return `
+          <tr class="hover:bg-slate-800/50 transition">
+            <td class="py-3 px-4">
+              <div class="font-bold text-white">${escapeHtml(ast.asset_name)}</div>
+              <div class="text-xs text-amber-400">${escapeHtml(ast.asset_code)}</div>
+            </td>
+            <td class="py-3 px-4 text-xs">
+              <div>${escapeHtml(cat)}</div>
+              <div class="text-slate-400">${escapeHtml(loc)}</div>
+            </td>
+            <td class="py-3 px-4 text-xs">
+              <div>${escapeHtml(ast.brand)} ${escapeHtml(ast.model_number)}</div>
+              <div class="text-slate-400">S/N: ${escapeHtml(ast.serial_number || '-')}</div>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <span class="px-2 py-1 text-xs rounded-lg font-bold ${ast.status === 'Aktif' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">${escapeHtml(ast.status)}</span>
+            </td>
+            <td class="py-3 px-4 text-xs font-medium text-amber-300">${escapeHtml(holder)}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="viewAset('${ast.asset_id}')" class="p-1.5 bg-slate-800 text-amber-400 rounded-lg"><i class="fa-solid fa-eye"></i></button>
+              <button onclick="openModalAset(true, '${ast.asset_id}')" class="p-1.5 bg-slate-800 text-blue-400 rounded-lg"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="deleteRecord('assets', 0, '${ast.asset_id}')" class="p-1.5 bg-slate-800 text-rose-400 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewAset(id) {
+      const ast = appData.assets.find(a => String(a.asset_id) === String(id));
+      if(!ast) return;
+      const cat = appData.categories.find(c => String(c.category_id) === String(ast.category_id))?.category_name || '-';
+      const loc = appData.locations.find(l => String(l.location_id) === String(ast.location_id))?.location_name || '-';
+      let photos = [];
+      try { photos = typeof ast.photos_json === 'string' ? JSON.parse(ast.photos_json) : (ast.photos_json || []); } catch(e){}
+
+      document.getElementById('viewAssetContent').innerHTML = `
+        <div class="border-b pb-4 flex justify-between items-center">
+          <div>
+            <h2 class="text-xl font-bold uppercase text-slate-900">${escapeHtml(ast.asset_name)}</h2>
+            <p class="text-xs text-slate-500">Kode Aset: ${escapeHtml(ast.asset_code)}</p>
+          </div>
+          <span class="px-3 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-full border border-amber-300">${escapeHtml(ast.status)}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div><strong>Kategori:</strong> ${escapeHtml(cat)}</div>
+          <div><strong>Lokasi Fisik:</strong> ${escapeHtml(loc)}</div>
+          <div><strong>Merek & Model:</strong> ${escapeHtml(ast.brand || '-')} ${escapeHtml(ast.model_number || '')}</div>
+          <div><strong>Serial Number:</strong> ${escapeHtml(ast.serial_number || '-')}</div>
+          <div><strong>Tanggal Pembelian:</strong> ${escapeHtml(ast.purchase_date || '-')}</div>
+          <div><strong>Harga Pembelian:</strong> Rp ${Number(ast.purchase_cost || 0).toLocaleString('id-ID')}</div>
+        </div>
+        <div>
+          <h4 class="text-xs font-bold uppercase text-slate-500 mb-2 border-b pb-1">Galeri Foto Aset</h4>
+          <div class="grid grid-cols-3 gap-2">
+            ${photos.length ? photos.map(src => `<img src="${src}" class="w-full h-32 object-cover border rounded-lg">`).join('') : '<span class="text-xs text-slate-400">Tidak ada foto</span>'}
+          </div>
+        </div>
+      `;
+      document.getElementById('modalViewAset').classList.remove('hidden');
+    }
+
+    // --- Penyerahan Aset ---
+    function openModalPeminjaman(isEdit = false, id = null) {
+      const astSelect = document.getElementById('assignAsset');
+      const empSelect = document.getElementById('assignEmployee');
+      astSelect.innerHTML = appData.assets.map(a => `<option value="${a.asset_id}">${escapeHtml(a.asset_code)} - ${escapeHtml(a.asset_name)}</option>`).join('');
+      empSelect.innerHTML = appData.employees.map(e => `<option value="${e.employee_id}">${escapeHtml(e.nama)} (${escapeHtml(e.nip)})</option>`).join('');
+      tempSignedReceipt = [];
+      document.getElementById('signedReceiptPreview').innerText = '';
+
+      if(isEdit && id) {
+        const asg = appData.assignments.find(a => String(a.assignment_id) === String(id));
+        if(asg) {
+          document.getElementById('assignId').value = asg.assignment_id;
+          document.getElementById('assignAsset').value = asg.asset_id;
+          document.getElementById('assignEmployee').value = asg.employee_id;
+          document.getElementById('assignDate').value = asg.assigned_date;
+        }
+      } else {
+        document.getElementById('assignId').value = '';
+        document.getElementById('assignDate').value = new Date().toISOString().split('T')[0];
+      }
+      document.getElementById('modalPeminjaman').classList.remove('hidden');
+    }
+
+    function handleSignedReceiptUpload(e) {
+      const file = e.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          tempSignedReceipt = [ev.target.result];
+          document.getElementById('signedReceiptPreview').innerText = 'File terupload (' + file.name + ')';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function submitPeminjaman(e) {
+      e.preventDefault();
+      const payload = {
+        assignment_id: document.getElementById('assignId').value || 'ASG-' + Date.now().toString().slice(-4),
+        asset_id: document.getElementById('assignAsset').value,
+        employee_id: document.getElementById('assignEmployee').value,
+        assigned_date: document.getElementById('assignDate').value,
+        returned_date: '',
+        signed_receipt_json: JSON.stringify(tempSignedReceipt)
+      };
+
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalPeminjaman'); loadAllDataFromBackend(); }).saveAssignment(payload);
+      } else {
+        const idx = appData.assignments.findIndex(a => String(a.assignment_id) === String(payload.assignment_id));
+        if(idx >= 0) appData.assignments[idx] = payload; else appData.assignments.push(payload);
+        closeModal('modalPeminjaman'); renderAll();
+      }
+    }
+
+    function renderPeminjaman() {
+      document.getElementById('tablePeminjamanBody').innerHTML = appData.assignments.map(asg => {
+        const ast = appData.assets.find(a => String(a.asset_id) === String(asg.asset_id));
+        const emp = appData.employees.find(e => String(e.employee_id) === String(asg.employee_id));
+
+        return `
+          <tr class="hover:bg-slate-800/50 transition">
+            <td class="py-3 px-4">
+              ${!asg.returned_date ? `<button onclick="openModalPengembalian('${asg.assignment_id}')" class="px-2.5 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold rounded-lg text-xs">Kembalikan</button>` : `<span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i>Selesai</span>`}
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-400 font-mono">${asg.assignment_id}</td>
+            <td class="py-3 px-4"><div class="font-bold text-white text-xs">${escapeHtml(ast?.asset_name || '-')}</div><div class="text-[11px] text-slate-400">${escapeHtml(ast?.asset_code || '')}</div></td>
+            <td class="py-3 px-4 text-xs font-medium text-slate-200">${escapeHtml(emp?.nama || '-')}</td>
+            <td class="py-3 px-4 text-xs text-slate-300">${asg.assigned_date}</td>
+            <td class="py-3 px-4 text-xs text-slate-400">${asg.returned_date || '-'}</td>
+            <td class="py-3 px-4 text-center"><button onclick="printReceipt('${asg.assignment_id}')" class="px-2.5 py-1 bg-slate-800 text-amber-400 text-xs font-bold rounded-lg border border-slate-700"><i class="fa-solid fa-print mr-1"></i> Cetak BA</button></td>
+            <td class="py-3 px-4 text-right space-x-2">
+              <button onclick="deleteRecord('assignments', 0, '${asg.assignment_id}')" class="p-1.5 bg-slate-800 text-rose-400 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openModalPengembalian(id) {
+      document.getElementById('returnAssignmentId').value = id;
+      document.getElementById('returnDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('modalPengembalian').classList.remove('hidden');
+    }
+
+    function processReturn() {
+      const id = document.getElementById('returnAssignmentId').value;
+      const date = document.getElementById('returnDateInput').value;
+      if(!date) return;
+
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalPengembalian'); loadAllDataFromBackend(); }).markAssignmentReturned(id, date);
+      } else {
+        const asg = appData.assignments.find(a => String(a.assignment_id) === String(id));
+        if(asg) asg.returned_date = date;
+        closeModal('modalPengembalian'); renderAll();
+      }
+    }
+
+    function printReceipt(id) {
+      const asg = appData.assignments.find(a => String(a.assignment_id) === String(id));
+      if(!asg) return;
+      const ast = appData.assets.find(a => String(a.asset_id) === String(asg.asset_id));
+      const emp = appData.employees.find(e => String(e.employee_id) === String(asg.employee_id));
+      const s = appData.settings || {};
+
+      document.getElementById('printReceiptBody').innerHTML = `
+        <div class="flex items-center justify-between border-b pb-4">
+          <div class="flex items-center gap-3">
+            <img src="${s.company_logo || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}" class="w-12 h-12 object-contain">
+            <div>
+              <h2 class="text-lg font-bold uppercase text-slate-900">${escapeHtml(s.company_name || 'KSO LRS-TAL')}</h2>
+              <p class="text-xs text-slate-500">${escapeHtml(s.company_address || '')}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <h3 class="text-sm font-bold uppercase text-amber-600">BERITA ACARA SERAH TERIMA ASET</h3>
+            <p class="text-xs text-slate-500">Ref: ${asg.assignment_id}</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-700 leading-relaxed">
+          Pada hari ini, tanggal <strong>${asg.assigned_date}</strong>, kami yang bertanda tangan di bawah ini menyerahkan barang/aset milik perusahaan dengan rincian sebagai berikut:
+        </p>
+
+        <div class="bg-slate-50 border p-4 rounded-lg space-y-2 text-xs">
+          <div><strong>Kode Aset:</strong> ${escapeHtml(ast?.asset_code || '-')}</div>
+          <div><strong>Nama Aset:</strong> ${escapeHtml(ast?.asset_name || '-')}</div>
+          <div><strong>Merek/Model/SN:</strong> ${escapeHtml(ast?.brand || '-')} / ${escapeHtml(ast?.model_number || '-')} / ${escapeHtml(ast?.serial_number || '-')}</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 text-xs pt-8 text-center">
+          <div>
+            <p class="font-bold mb-16">Penerima / Penanggung Jawab,</p>
+            <p class="font-bold underline">${escapeHtml(emp?.nama || '( .................... )')}</p>
+            <p class="text-slate-500 text-[11px]">${escapeHtml(emp?.jabatan || 'Karyawan')}</p>
+          </div>
+          <div>
+            <p class="font-bold mb-16">Yang Menyerahkan (GA Dept),</p>
+            <p class="font-bold underline">( .................................... )</p>
+            <p class="text-slate-500 text-[11px]">Officer General Affairs</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('modalPrint').classList.remove('hidden');
+    }
+
+    // --- Pemeliharaan & Servis ---
+    function openModalMaintenance(isEdit = false, id = null) {
+      const astSelect = document.getElementById('maintAsset');
+      astSelect.innerHTML = appData.assets.map(a => `<option value="${a.asset_id}">${escapeHtml(a.asset_code)} - ${escapeHtml(a.asset_name)}</option>`).join('');
+      tempPaymentReceipt = [];
+      document.getElementById('paymentReceiptPreview').innerText = '';
+
+      if(isEdit && id) {
+        const m = appData.maintenances.find(item => String(item.maintenance_id) === String(id));
+        if(m) {
+          document.getElementById('maintId').value = m.maintenance_id;
+          document.getElementById('maintAsset').value = m.asset_id;
+          document.getElementById('maintDate').value = m.maintenance_date;
+          document.getElementById('maintCost').value = m.cost;
+          document.getElementById('maintDesc').value = m.description;
+        }
+      } else {
+        document.getElementById('maintId').value = '';
+        document.getElementById('maintDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('maintCost').value = '';
+        document.getElementById('maintDesc').value = '';
+      }
+      document.getElementById('modalMaintenance').classList.remove('hidden');
+    }
+
+    function handlePaymentReceiptUpload(e) {
+      const file = e.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          tempPaymentReceipt = [ev.target.result];
+          document.getElementById('paymentReceiptPreview').innerText = 'File terupload (' + file.name + ')';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function submitMaintenance(e) {
+      e.preventDefault();
+      const payload = {
+        maintenance_id: document.getElementById('maintId').value || 'MNT-' + Date.now().toString().slice(-4),
+        asset_id: document.getElementById('maintAsset').value,
+        maintenance_date: document.getElementById('maintDate').value,
+        cost: document.getElementById('maintCost').value,
+        description: document.getElementById('maintDesc').value,
+        payment_receipt_json: JSON.stringify(tempPaymentReceipt)
+      };
+
+      if(typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(() => { closeModal('modalMaintenance'); loadAllDataFromBackend(); }).saveMaintenance(payload);
+      } else {
+        const idx = appData.maintenances.findIndex(m => String(m.maintenance_id) === String(payload.maintenance_id));
+        if(idx >= 0) appData.maintenances[idx] = payload; else appData.maintenances.push(payload);
+        closeModal('modalMaintenance'); renderAll();
+      }
+    }
+
+    function renderMaintenance() {
+      document.getElementById('tableMaintenanceBody').innerHTML = appData.maintenances.map(m => {
+        const ast = appData.assets.find(a => String(a.asset_id) === String(m.asset_id));
+        return `
+          <tr class="hover:bg-slate-800/50 transition">
+            <td class="p-3 text-xs font-mono text-slate-400">${m.maintenance_id}</td>
+            <td class="p-3 text-xs font-bold text-white">${escapeHtml(ast?.asset_name || '-')}</td>
+            <td class="p-3 text-xs text-slate-300">${m.maintenance_date}</td>
+            <td class="p-3 text-xs text-amber-400 font-semibold">Rp ${Number(m.cost || 0).toLocaleString('id-ID')}</td>
+            <td class="p-3 text-xs text-slate-300 max-w-xs truncate">${escapeHtml(m.description)}</td>
+            <td class="p-3 text-right space-x-2">
+              <button onclick="viewMaintenance('${m.maintenance_id}')" class="p-1.5 bg-slate-800 text-amber-400 rounded-lg"><i class="fa-solid fa-eye"></i></button>
+              <button onclick="deleteRecord('maintenances', 0, '${m.maintenance_id}')" class="p-1.5 bg-slate-800 text-rose-400 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function viewMaintenance(id) {
+      const m = appData.maintenances.find(item => String(item.maintenance_id) === String(id));
+      if(!m) return;
+      const ast = appData.assets.find(a => String(a.asset_id) === String(m.asset_id));
+      const s = appData.settings || {};
+
+      document.getElementById('viewMaintenanceContent').innerHTML = `
+        <div class="border-b pb-4 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">NOTA PEMELIHARAAN / SERVIS</h2>
+            <p class="text-xs text-slate-500">ID Servis: ${m.maintenance_id}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div><strong>Aset:</strong> ${escapeHtml(ast?.asset_name || '-')} (${escapeHtml(ast?.asset_code || '-')})</div>
+          <div><strong>Tanggal Perbaikan:</strong> ${m.maintenance_date}</div>
+          <div><strong>Biaya Perbaikan:</strong> Rp ${Number(m.cost || 0).toLocaleString('id-ID')}</div>
+        </div>
+        <div class="border-t pt-2 text-xs">
+          <strong>Deskripsi Pekerjaan:</strong>
+          <p class="mt-1 text-slate-700 leading-relaxed">${escapeHtml(m.description)}</p>
+        </div>
+      `;
+      document.getElementById('modalViewMaintenance').classList.remove('hidden');
+    }
+
+    // Generic Delete Call
+    function deleteRecord(sheetKey, colIdx, val) {
+      Swal.fire({
+        title: 'Hapus Data?',
+        text: 'Apakah Anda yakin ingin menghapus record ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#334155',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        background: '#1e293b',
+        color: '#fff'
+      }).then(res => {
+        if(res.isConfirmed) {
+          if(typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run.withSuccessHandler(() => { loadAllDataFromBackend(); }).deleteRecord(sheetKey, colIdx, val);
+          } else {
+            appData[sheetKey] = appData[sheetKey].filter(item => String(Object.values(item)[colIdx]) !== String(val));
+            renderAll();
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
